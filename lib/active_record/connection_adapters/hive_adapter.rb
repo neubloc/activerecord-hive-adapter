@@ -61,19 +61,8 @@ module ActiveRecord
         return NATIVE_DATABASE_TYPES
       end
 
-      def select(sql, name = nil)
-        results = select_rows(sql)
-
-        # Lookup schema information
-        cols = @connection.client.getSchema.fieldSchemas.collect { |c| c.name }
-
-        rows = []
-        results.each do |r|
-          row = {}
-          cols.each_with_index { |c, i| row[c] = r[i] }
-          rows << row 
-        end
-        rows
+      def select(sql, name = nil, binds = [])
+        select_rows(sql).map(&:stringify_keys)
       end
 
 
@@ -88,13 +77,19 @@ module ActiveRecord
       end
 
       def columns(table, name = nil)
-        results = select_rows("DESCRIBE EXTENDED #{table}")
-        return results.delete_if { |r| r.first.blank? || r.first =~ /table info/i }.
-                       collect   { |r|
-          (column_name, sql_type, comment) = r
-          column_details = JSON.parse(comment || "{}").symbolize_keys
+        rows = select_rows("DESCRIBE EXTENDED #{table}").reject do |row|
+          row[:col_name].blank? || row[:col_name] =~ /table info/i
+        end
+        
+        rows.map do |row|
+          column_name = row[:col_name]
+          sql_type    = row[:data_type]
+          comment     = row[:comment]
+          
+          column_details = JSON.parse(comment.present? ? comment : "{}").symbolize_keys
           HiveColumn.new(column_name, sql_type, column_details)
-        }
+        
+        end
       end
 
       def add_column_options!(sql, options) #:nodoc:
