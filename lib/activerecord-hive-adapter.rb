@@ -8,9 +8,10 @@ if defined?(::Rails::Railtie)
           require 'active_record/connection_adapters/hive_adapter'
 
           # Cache column descriptions between requests in test and production environments
-          if Rails.env.test? || Rails.env.production?
-            ActiveRecord::ConnectionAdapters::HiveAdapter.cache_columns = true
-          end
+          # TODO: Fix this and write test case
+          # if Rails.env.test? || Rails.env.production?
+          #  ActiveRecord::ConnectionAdapters::HiveAdapter.cache_columns = true
+          # end
 
         end
 

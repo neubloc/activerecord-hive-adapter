@@ -201,10 +201,7 @@ module ActiveRecord
         column_options[:default] = default unless default.nil?
         column_options[:partition] = partition if partition
         column_options[:requested_type] = type
-        add_column_options!(
-          column_sql, 
-          base.native_database_types[type].update(column_options)
-        )
+        add_column_options!(column_sql, column_options) unless type.to_sym == :primary_key
         column_sql
       end
 
