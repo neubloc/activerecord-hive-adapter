@@ -69,14 +69,20 @@ module ActiveRecord
       def tables(name = nil)
         tables = []
         results = select_rows("SHOW TABLES")
-        return results.collect { |t| t.first }
+        return results.collect { |t| t[:tab_name] }      
       end
 
       def primary_key(table)
         return columns(table).reject { |c| !c.primary }.collect { |c| c.name }
       end
 
+
       def columns(table, name = nil)
+        @columns        ||= {}
+        @columns[table] ||= fetch_columns(table, name)
+      end
+      
+      def fetch_columns(table, name = nil)
         rows = select_rows("DESCRIBE EXTENDED #{table}").reject do |row|
           row[:col_name].blank? || row[:col_name] =~ /table info/i
         end
